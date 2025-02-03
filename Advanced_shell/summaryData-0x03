@@ -1,30 +1,40 @@
 #!/bin/bash
 
-# Define the CSV file
+# Output CSV file
 CSV_FILE="pokemon_report.csv"
 
-# Write CSV header
+# Start by writing headers to the CSV file
 echo "Name,Height,Weight" > "$CSV_FILE"
 
-# Process each JSON file
-for FILE in *.json; do
-    if [[ -f "$FILE" ]]; then
-        # Extract Pokémon data using jq
-        NAME=$(jq -r '.name' "$FILE")
-        HEIGHT=$(jq -r '.height' "$FILE")
-        WEIGHT=$(jq -r '.weight' "$FILE")
+# Temporary file to store height and weight data for calculating averages
+TEMP_FILE="pokemon_data.txt"
 
-        # Append data to CSV file
-        echo "$NAME,$HEIGHT,$WEIGHT" >> "$CSV_FILE"
-    fi
+# Loop through each JSON file generated in Task 3 (assumed to be in the current directory)
+for json_file in *.json; do
+    # Extract name, height, and weight using jq and format as CSV
+    name=$(jq -r '.name' "$json_file")
+    height=$(jq -r '.height' "$json_file")
+    weight=$(jq -r '.weight' "$json_file")
+
+    # Append the extracted data to the CSV file
+    echo "$name,$height,$weight" >> "$CSV_FILE"
+
+    # Append height and weight data to temporary file for averaging
+    echo "$height $weight" >> "$TEMP_FILE"
 done
 
-# Calculate average height and weight using awk
-awk -F',' '
-NR>1 { total_height += $2; total_weight += $3; count++ }
-END {
-    print "Average Height:", total_height / count;
-    print "Average Weight:", total_weight / count;
-}' "$CSV_FILE"
+# Calculate the average height and weight using awk
+average_height=$(awk '{ sum += $1 } END { if (NR > 0) print sum / NR }' "$TEMP_FILE")
+average_weight=$(awk '{ sum += $2 } END { if (NR > 0) print sum / NR }' "$TEMP_FILE")
 
-echo "Report generated: $CSV_FILE"
+# Display the averages
+echo "Average Height: $average_height"
+echo "Average Weight: $average_weight"
+
+# Clean up temporary file
+rm -f "$TEMP_FILE"
+
+# Optional: Use sed to format the CSV or any other necessary operations
+sed -i '1s/^/Report Generated on: '$(date)'\n/' "$CSV_FILE"
+
+echo "Report generated successfully: $CSV_FILE"
