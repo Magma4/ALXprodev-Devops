@@ -1,5 +1,5 @@
 #!/bin/bash
-h
+# Ensure the script is executable: chmod +x fetch_pokemon_parallel_with_jobs.sh
 
 # API Base URL
 API_URL="https://pokeapi.co/api/v2/pokemon"
@@ -44,11 +44,15 @@ fetch_pokemon() {
     fi
 }
 
-# Loop through the Pokémon list in parallel
+# Loop through the Pokémon list in parallel, managing background jobs
 for pokemon in "${POKEMON_LIST[@]}"; do
-    fetch_pokemon "$pokemon" &  # Run in background
+    fetch_pokemon "$pokemon" &  # Run each fetch in background
+    jobs+=($!)  # Save the process ID of the background job
 done
 
-wait  # Ensure all background processes complete
+# Wait for all background processes to complete
+for job in "${jobs[@]}"; do
+    wait $job  # Wait for each background process
+done
 
 echo "All Pokémon data retrieval tasks completed!"
