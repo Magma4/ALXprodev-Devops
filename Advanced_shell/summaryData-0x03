@@ -1,0 +1,30 @@
+#!/bin/bash
+
+# Define the CSV file
+CSV_FILE="pokemon_report.csv"
+
+# Write CSV header
+echo "Name,Height,Weight" > "$CSV_FILE"
+
+# Process each JSON file
+for FILE in *.json; do
+    if [[ -f "$FILE" ]]; then
+        # Extract Pokémon data using jq
+        NAME=$(jq -r '.name' "$FILE")
+        HEIGHT=$(jq -r '.height' "$FILE")
+        WEIGHT=$(jq -r '.weight' "$FILE")
+
+        # Append data to CSV file
+        echo "$NAME,$HEIGHT,$WEIGHT" >> "$CSV_FILE"
+    fi
+done
+
+# Calculate average height and weight using awk
+awk -F',' '
+NR>1 { total_height += $2; total_weight += $3; count++ }
+END {
+    print "Average Height:", total_height / count;
+    print "Average Weight:", total_weight / count;
+}' "$CSV_FILE"
+
+echo "Report generated: $CSV_FILE"
