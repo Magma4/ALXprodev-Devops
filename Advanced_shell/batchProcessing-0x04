@@ -1,5 +1,4 @@
 #!/bin/bash
-# Ensure the script is executable: chmod +x fetch_pokemon_parallel_with_jobs.sh
 
 # API Base URL
 API_URL="https://pokeapi.co/api/v2/pokemon"
@@ -52,7 +51,11 @@ done
 
 # Wait for all background processes to complete
 for job in "${jobs[@]}"; do
-    wait $job  # Wait for each background process
+    wait $job  # Wait for each background process to finish
+    if [[ $? -ne 0 ]]; then
+        echo "Process $job failed. Killing all processes..." >> "$ERROR_LOG"
+        kill $job  # Kill the background job if it fails
+    fi
 done
 
 echo "All Pokémon data retrieval tasks completed!"
